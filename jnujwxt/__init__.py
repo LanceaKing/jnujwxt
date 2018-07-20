@@ -1,12 +1,16 @@
 from io import BytesIO
 
+import sqlalchemy as sa
 from PIL import Image
 from requests import Session
 
 from .config import Config
-from .courses import CourseJar, parser
+from .courses import Course, parser
 from .viewstate import LoginVS, SearchVS, ViewState
 from .xkcenter import XKCenter
+
+db_engine = sa.create_engine(Config.DATABASE_URI)
+DBSession = sa.orm.sessionmaker(bind=db_engine)
 
 
 class Jwxt(Session):
@@ -21,6 +25,7 @@ class Jwxt(Session):
         Session.__init__(self)
         self.studentid = ''
         self.is_login = False
+        self.db_session = DBSession()
 
     def __repr__(self):
         return '<Jwxt netloc={}, id={}, is_login={})>'.format(
@@ -59,17 +64,19 @@ class Jwxt(Session):
     def xkcenter(self):
         return XKCenter(self)
 
-    def all_courses(self, online=False, only_electable=False):
-        if online:
-            assert self.is_login
-            search_url = self.urls['search']
-            init = self.get(search_url)
-            search_vs = SearchVS(self, init)
-            search_vs.fill(only_electable)
-            search_result = search_vs.submit()
-            cj = CourseJar()
-            for c in parser(search_result.text):
-                cj.append(c)
-            return cj
-        else:
-            return None # local database result
+    def update_database(self, only_electable=False):
+        assert self.is_login
+        search_url = self.urls['search']
+        init = self.get(search_url)
+        search_vs = SearchVS(self, init)
+        search_vs.fill(only_electable)
+        search_result = search_vs.submit()
+
+        count = 0
+        for kwargs in parser(search_result.text):
+            new_course = Course(**kwargs)
+            self.db_session.merge(new_course)
+            count += 1
+
+        self.db_session.commit()
+        return count

@@ -1,7 +1,7 @@
 import sys
-from os.path import dirname
+from os.path import abspath, dirname
 
-path = dirname(dirname(__file__))
+path = dirname(dirname(abspath(__file__)))
 sys.path.insert(0, path)
 
 from jnujwxt.cli import main

@@ -44,11 +44,11 @@ class XKCenter(object):
         self.is_readme = True
         return xkcenter
 
-    def hit(self, class_id):
+    def hit(self, schedule_id):
         if self.is_closed:
             raise CoursesError(self.closed_spec)
         hit_vs = self.viewstate.get(HitVS)
-        hit_vs.fill(class_id, self.is_summer)
+        hit_vs.fill(schedule_id, self.is_summer)
         hit_one = hit_vs.submit()
 
         rp = re.compile(r"共\d+页(\d+)行")

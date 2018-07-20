@@ -1,4 +1,7 @@
+import os
 from urllib.parse import urljoin
+
+heredir = os.path.dirname(os.path.abspath(__file__))
 
 
 class Config(object):
@@ -19,3 +22,4 @@ class Config(object):
         'http://202.116.0.172:8083/',
         'https://jwxt.jnu.edu.cn/'
     ]
+    DATABASE_URI = 'sqlite:///' + os.path.join(heredir, 'jnujwxt.db')

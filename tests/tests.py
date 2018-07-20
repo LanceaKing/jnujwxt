@@ -1,9 +1,9 @@
 import sys
 import unittest
 from getpass import getpass
-from os.path import dirname
+from os.path import abspath, dirname
 
-path = dirname(dirname(__file__))
+path = dirname(dirname(abspath(__file__)))
 sys.path.insert(0, path)
 
 from jnujwxt import Jwxt
@@ -21,8 +21,8 @@ class JwxtCase(unittest.TestCase):
         self.assertTrue(xkcenter.is_closed) # 2018/07/16
 
     def test_course_search(self):
-        courses = jwxt.all_courses(online=True)
-        self.assertGreater(len(courses), 3000) # 2018/07/13
+        count = jwxt.update_database()
+        self.assertGreater(count, 3000) # 2018/07/13
 
     @unittest.skip('it\'s too dangerous to test')
     def test_course_hit(self):
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         from userinfo import password, studentid
     except ImportError:
         studentid = input('[$] StudentID > ')
-        password = input('[$] Password > ')
+        password = getpass('[$] Password > ')
 
     validcode_img = jwxt.validcode_img()
     validcode_img.show()
