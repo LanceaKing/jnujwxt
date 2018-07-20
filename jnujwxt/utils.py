@@ -19,18 +19,21 @@ class NetTestThread(Thread):
             self.elapsed = 'timeout'
 
 
-def net_test(net_list):
-    thread_pool = []
-    for net in net_list:
-        t = NetTestThread(net)
-        t.start()
-        thread_pool.append(t)
-
+def net_test(net_list, nt=5):
     test_result = {}
-    for t in thread_pool:
-        t.join()
-        if t.elapsed != 'timeout':
-            test_result[t.net] = t.elapsed
+    thread_pool = []
+    splited = (net_list[i:i+nt] for i in range(0, len(net_list), nt))
+
+    for sl in splited:
+        for net in sl:
+            t = NetTestThread(net)
+            t.start()
+            thread_pool.append(t)
+        for t in thread_pool:
+            t.join()
+            if t.elapsed != 'timeout':
+                test_result[t.net] = t.elapsed
+        thread_pool.clear()
 
     if len(test_result):
         best_net = min(test_result, key=test_result.get)

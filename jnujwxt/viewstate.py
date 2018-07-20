@@ -140,8 +140,10 @@ class SearchVS(ViewState):
         'lbtnSearch': '查询'
     }
 
-    def fill(self, only_electable=False):
-        self['chkWxk'] = '' if only_electable else 'on'
+    def fill(self, term_prefix=None, only_electable=False):
+        self['chkWxk'] = 'on' if not only_electable else ''
+        if term_prefix:
+            self['txtPkbh'] = str(term_prefix)
 
     def submit(self):
         init = ViewState.submit(self)

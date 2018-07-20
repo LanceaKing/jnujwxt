@@ -64,12 +64,12 @@ class Jwxt(Session):
     def xkcenter(self):
         return XKCenter(self)
 
-    def update_database(self, only_electable=False):
+    def update_courses(self, term_prefix=None, only_electable=False):
         assert self.is_login
         search_url = self.urls['search']
         init = self.get(search_url)
         search_vs = SearchVS(self, init)
-        search_vs.fill(only_electable)
+        search_vs.fill(term_prefix, only_electable)
         search_result = search_vs.submit()
 
         count = 0

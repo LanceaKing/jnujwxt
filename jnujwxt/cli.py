@@ -5,6 +5,7 @@ from . import DBSession, Jwxt
 from .config import Config
 from .courses import Course
 from .utils import net_test
+from .errors import LoginError
 
 
 def best_entry():
@@ -24,28 +25,34 @@ def login_jwxt(jwxt):
     validcode_img = jwxt.validcode_img()
     validcode_img.show()
     validcode = input('[$] Validcode > ')
-    jwxt.login(studentid, password, validcode)
+    try:
+        jwxt.login(studentid, password, validcode)
+        print('[+] Login success')
+    except LoginError as LE:
+        print('[-] Login failure:', LE.msg)
+        exit()
 
 
-def update_courses():
+def update_courses(term_prefix=None):
     from time import perf_counter
     jwxt = Jwxt()
     login_jwxt(jwxt)
 
     print('[*] Updating ...')
     start = perf_counter()
-    count = jwxt.update_database()
+    count = jwxt.update_courses(term_prefix)
     end = perf_counter()
     print('[*] Successfully update {} courses in {}s'
         .format(count, round(end - start, 2)))
+    jwxt.logout()
 
 
 def query_course(name):
     result = (
         DBSession()
         .query(Course)
-        .filter(Course.name.like('%'+name+'%')).
-        all()
+        .filter(Course.name.like('%'+name+'%'))
+        .all()
     )
     for c in result:
         print(c)
@@ -67,16 +74,26 @@ def main():
         help='update the course database via online jwxt')
 
     features_gp.add_argument('--query-course', '-Q',
-        dest='course_name',
-        action='store',
+        dest='query_course',
+        action='store_true',
         help='simplely find the course by name')
+
+    ap.add_argument('arg', nargs='*')
 
     args = ap.parse_args()
     if args.best_entry:
         best_entry()
     elif args.update_courses:
-        update_courses()
-    elif args.course_name:
-        query_course(args.course_name)
+        try:
+            term_prefix = args.arg[0]
+        except IndexError:
+            term_prefix = None
+        update_courses(term_prefix)
+    elif args.query_course:
+        try:
+            name = args.arg[0]
+        except IndexError:
+            name = ''
+        query_course(name)
     else:
         ap.print_usage()

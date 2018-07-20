@@ -21,7 +21,7 @@ class JwxtCase(unittest.TestCase):
         self.assertTrue(xkcenter.is_closed) # 2018/07/16
 
     def test_course_search(self):
-        count = jwxt.update_database()
+        count = jwxt.update_courses()
         self.assertGreater(count, 3000) # 2018/07/13
 
     @unittest.skip('it\'s too dangerous to test')
