@@ -1,19 +1,15 @@
 import re
 from urllib.parse import urlencode
 
-from .errors import CoursesError, LoginError, alertable
+from .error import CourseError, LoginError, alertable
 
 
-class ViewState(dict):
+class BaseViewState(dict):
 
     form = {}
     pattern = re.compile(r'<input type="hidden" name="(?P<key>__[A-Z]+)"'
                          r' id="(?P=key)" value="(?P<value>.*?)" />')
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64;'
-                       ' rv:62.0) Gecko/20100101 Firefox/62.0')
-    }
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
 
     def __init__(self, session, response):
         dict.__init__(self)
@@ -38,19 +34,21 @@ class ViewState(dict):
     def urldata(self) -> str:
         return urlencode(self, encoding=self.response.encoding)
 
-    def submit(self, action=None):
+    def submit(self, action=None, **kwargs):
         action = action or self.response.url
+        headers = kwargs.pop('headers', {})
+        headers.update(self.headers)
         response = self.session.post(
             action,
             data=self.urldata,
-            headers=self.headers
+            headers=headers
         )
         return response
 
-    def postback(self, target, action=None):
+    def postback(self, target, action=None, **kwargs):
         old_target = self['__EVENTTARGET']
         self['__EVENTTARGET'] = target
-        response = self.submit(action)
+        response = self.submit(action, **kwargs)
         self['__EVENTTARGET'] = old_target
         return response
 
@@ -67,7 +65,7 @@ class ViewState(dict):
             dict.__repr__(self)[:64])
 
 
-class LoginVS(ViewState):
+class LoginVS(BaseViewState):
 
     form = {
         'txtYHBS': '',
@@ -83,10 +81,10 @@ class LoginVS(ViewState):
 
     @alertable(LoginError)
     def submit(self):
-        return ViewState.submit(self)
+        return BaseViewState.submit(self)
 
 
-class HitVS(ViewState):
+class HitVS(BaseViewState):
 
     form = {
         'dlstSsfw': '',
@@ -106,18 +104,18 @@ class HitVS(ViewState):
         self['dlstSsfw'] = '可选全部课程' if not summer else '暑期班选课'
         self['txtPkbh'] = class_id
 
-    @alertable(CoursesError)
+    @alertable(CourseError)
     def submit(self):
-        return ViewState.submit(self)
+        return BaseViewState.submit(self)
 
 
-class XKCenterVS(ViewState):
+class XKCenterVS(BaseViewState):
 
     selections = {
         HitVS: ('btnKkLb', '开课列表'),
-        #'btnWdXk': ('btnWdXk', '我的选课'),
-        #'btnExport': ('btnExport', '导出课程表'),
-        #'btnExport0': ('btnExport0', '导出考试安排表')
+        # 'btnWdXk': ('btnWdXk', '我的选课'),
+        # 'btnExport': ('btnExport', '导出课程表'),
+        # 'btnExport0': ('btnExport0', '导出考试安排表')
     }
 
     def get(self, target):
@@ -133,7 +131,7 @@ class XKCenterVS(ViewState):
         return target(self.session, response)
 
 
-class SearchVS(ViewState):
+class SearchVS(BaseViewState):
 
     form = {
         'chkWxk': '',
@@ -146,9 +144,9 @@ class SearchVS(ViewState):
             self['txtPkbh'] = str(term_prefix)
 
     def submit(self):
-        init = ViewState.submit(self)
+        init = BaseViewState.submit(self)
         rp = re.compile(r"共\d+页(\d+)行")
         count = rp.search(init.text).group(1)
-        all_result_vs = ViewState(self.session, init)
+        all_result_vs = BaseViewState(self.session, init)
         all_result_vs['txtRows'] = count
         return all_result_vs.submit()

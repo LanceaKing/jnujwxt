@@ -1,25 +1,21 @@
 import os
-from urllib.parse import urljoin
+from configparser import ConfigParser, ExtendedInterpolation
 
-heredir = os.path.dirname(os.path.abspath(__file__))
+basedir = os.path.dirname(os.path.abspath(__file__))
+
+configpath = os.path.join(basedir, 'settings.ini')
 
 
-class Config(object):
+def init_default():
+    from mako.template import Template
+    tpl_path = os.path.join(basedir, 'doc', 'settings.ini.mako')
+    tpl = Template(filename=tpl_path)
+    with open(configpath, 'w') as configfile:
+        configfile.write(tpl.render(basedir=basedir))
 
-    JWXT = 'https://jwxt.jnu.edu.cn/'
-    JWXT_URLS = {
-        'root': JWXT,
-        'index': urljoin(JWXT, 'IndexPage.aspx'),
-        'login': urljoin(JWXT, 'Login.aspx'),
-        'logout': urljoin(JWXT, 'areaTopLogo.aspx'),
-        'validcode': urljoin(JWXT, 'ValidateCode.aspx'),
-        'xkcenter': urljoin(JWXT, 'Secure/PaiKeXuanKe/wfrm_XK_XuanKe.aspx'),
-        'xkrule': urljoin(JWXT, 'Secure/PaiKeXuanKe/wfrm_XK_Rule.aspx'),
-        'xkreadme': urljoin(JWXT, 'Secure/PaiKeXuanKe/wfrm_Xk_ReadMeCn.aspx'),
-        'search': urljoin(JWXT, 'Secure/PaiKeXuanKe/wfrm_Pk_RlRscx.aspx')
-    }
-    JWXT_NETS = [
-        'http://202.116.0.172:8083/',
-        'https://jwxt.jnu.edu.cn/'
-    ]
-    DATABASE_URI = 'sqlite:///' + os.path.join(heredir, 'jnujwxt.db')
+
+if not os.path.exists(configpath):
+    init_default()
+
+config = ConfigParser(interpolation=ExtendedInterpolation())
+config.read(configpath)

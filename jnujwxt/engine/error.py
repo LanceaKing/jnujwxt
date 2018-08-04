@@ -1,17 +1,15 @@
-from .utils import find_alert_msg
+from ..util import find_alert_msg
 
 
 class JwxtException(Exception):
-    def __init__(self, msg):
-        Exception.__init__(self, msg)
-        self.msg = msg
+    pass
 
 
 class LoginError(JwxtException):
     pass
 
 
-class CoursesError(JwxtException):
+class CourseError(JwxtException):
     pass
 
 

@@ -19,8 +19,8 @@ import sys
 from os.path import abspath, dirname
 path = dirname(dirname(abspath(__file__)))
 sys.path.insert(0, path)
-import jnujwxt.courses
-target_metadata = jnujwxt.courses.Base.metadata
+import jnujwxt
+target_metadata = jnujwxt.engine.course.Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
